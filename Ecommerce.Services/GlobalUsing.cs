@@ -1,4 +1,5 @@
-﻿global using Ecommerce.Data.Entities;
+﻿global using Ecommerce.Data.Constant;
+global using Ecommerce.Data.Entities;
 global using Ecommerce.Data.Model;
 global using Ecommerce.Infrastructure.Context;
 global using Ecommerce.Infrastructure.UnitOfWorkPattern;

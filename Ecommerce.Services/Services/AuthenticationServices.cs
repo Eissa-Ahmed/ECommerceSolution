@@ -1,6 +1,4 @@
-﻿using Ecommerce.Data.Constant;
-
-namespace Ecommerce.Services.Services;
+﻿namespace Ecommerce.Services.Services;
 
 public class AuthenticationServices : IAuthenticationServices
 {
@@ -76,8 +74,53 @@ public class AuthenticationServices : IAuthenticationServices
     }
 
 
+    public async Task<string> ForgetPassword(string email, string NewPassword, string Code)
+    {
+        User? user = await _userManager.Users.Include(i => i.Codes).FirstOrDefaultAsync(x => x.Email == email);
+        if (user!.Codes.Any(i => i.Code == Code && i.IsActive))
+        {
+            user.Codes.All(i => i.IsUsed = true);
+            await _userManager.UpdateAsync(user);
+            IdentityResult resultRemovePass = await _userManager.RemovePasswordAsync(user);
+            if (resultRemovePass.Succeeded)
+            {
+                IdentityResult resultChangePass = await _userManager.AddPasswordAsync(user, NewPassword);
+                if (resultChangePass.Succeeded)
+                    return "Success";
+            }
+        }
+        return "Code Not Correct Or Expired";
+    }
+
+    public async Task<string> ResetPassword(string email, string OldPassword, string NewPassword)
+    {
+        IdentityResult identityResult = await _userManager.ChangePasswordAsync(_userManager.FindByEmailAsync(email).Result!, OldPassword, NewPassword);
+        if (!identityResult.Succeeded)
+            return string.Join(",", identityResult.Errors.Select(x => x.Description));
+        return "Success";
+    }
+
+    public async Task<string> SendCodeToChangePassword(string email)
+    {
+        User? user = await _userManager.FindByEmailAsync(email);
+        string code = generateCode();
+        user!.Codes.Add(new Codes { Code = code, UserId = user.Id });
+        IdentityResult resultUpdate = await _userManager.UpdateAsync(user);
+        if (!resultUpdate.Succeeded)
+            return string.Join(",", resultUpdate.Errors.Select(x => x.Description));
+
+        await _emailServices.SendEmail(user.Email!, "Code", code);
+        return "Success";
+    }
+
 
     // Private Methods
+    private string generateCode()
+    {
+        Random rand = new Random();
+        string code = rand.Next(100000, 999999).ToString();
+        return code;
+    }
     private bool tokenIsValid(string token, out ClaimsPrincipal claimsPrincipal)
     {
         var handler = new JwtSecurityTokenHandler();

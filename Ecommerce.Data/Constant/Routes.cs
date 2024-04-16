@@ -41,6 +41,9 @@ public static class Routes
     {
         public const string Login = Base + "Login";
         public const string Register = Base + "Register";
+        public const string SendCode = Base + "SendCode";
+        public const string ForgetPasswoed = Base + "ForgetPasswoed";
+        public const string ResetPassword = Base + "ResetPassword";
 
     }
 }
